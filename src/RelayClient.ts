@@ -862,6 +862,8 @@ export class RelayClient {
                     transactionDetails.tokenContract ?? constants.ZERO_ADDRESS
             },
             relayData: {
+                pctRelayFee: relayInfo.relayInfo.pctRelayFee,
+                baseRelayFee: relayInfo.relayInfo.baseRelayFee,
                 gasPrice,
                 callVerifier,
                 domainSeparator: getDomainSeparatorHash(
