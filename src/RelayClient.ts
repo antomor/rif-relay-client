@@ -633,6 +633,39 @@ export class RelayClient {
                 relayInfo
             )} transaction: ${JSON.stringify(transactionDetails)}`
         );
+        if ([undefined, null].includes(transactionDetails.tokenAmount)) {
+            log.debug('Calculating maxPossibleGas...');
+
+            const txDetailsClone: EnvelopingTransactionDetails = {
+                ...transactionDetails,
+                // a dump value, just to allow the correct estimation, including the token transfer
+                tokenAmount: web3.utils.toWei('1').toString()
+            };
+            const maxPossibleGas = await this.estimateMaxPossibleRelayGas(
+                txDetailsClone,
+                relayInfo.pingResponse.relayWorkerAddress
+            );
+            log.debug('maxPossibleGas', maxPossibleGas);
+            const tRifValueWei = getTRifWei(
+                costInWei(
+                    toBN(maxPossibleGas),
+                    toBN(transactionDetails.gasPrice)
+                )
+            );
+            log.info('RequestFees: max possible cost in tRIFWei', tRifValueWei);
+            // FIXME: We should add some additional charge here, instead of using just the tx estimation
+            transactionDetails = {
+                ...transactionDetails,
+                tokenAmount: tRifValueWei
+            };
+            transactionDetails.tokenGas = (
+                await this.estimateTokenTransferGas(
+                    transactionDetails,
+                    relayInfo.pingResponse.relayWorkerAddress
+                )
+            ).toString();
+        }
+
         let httpRequest: RelayTransactionRequest | DeployTransactionRequest;
         let acceptCallResult;
 
