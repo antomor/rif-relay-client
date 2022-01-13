@@ -633,7 +633,7 @@ export class RelayClient {
                 relayInfo
             )} transaction: ${JSON.stringify(transactionDetails)}`
         );
-        if ([undefined, null].includes(transactionDetails.tokenAmount)) {
+        if ([undefined, null, '0'].includes(transactionDetails.tokenAmount)) {
             log.debug('Calculating maxPossibleGas...');
 
             const txDetailsClone: EnvelopingTransactionDetails = {
@@ -986,4 +986,19 @@ export function _dumpRelayingResult(relayingResult: RelayingResult): string {
         });
     }
     return str;
+}
+
+function costInWei(maxPossibleGas: BN, gasPrice: BN) {
+    return maxPossibleGas.mul(gasPrice);
+}
+
+function getTRifWei(gasCostInWei: BN) {
+    const tRifPriceInRBTC = 0.000005739;
+    const ritTokenDecimals = 18;
+
+    const costInRBTC = web3.utils.fromWei(gasCostInWei.toString());
+    const costInTrif = parseFloat(costInRBTC) / tRifPriceInRBTC;
+    const costInTrifFixed = costInTrif.toFixed(ritTokenDecimals);
+    const costInTrifAsWei = web3.utils.toWei(costInTrifFixed);
+    return costInTrifAsWei;
 }
